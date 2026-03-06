@@ -39,7 +39,7 @@ Woodpecker requires elevated privileges to access rawIOKit hardware sensors. It 
 Paste this single command into your Terminal:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/Vishal01Mehra/Woodpecker/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/Vishal01Mehra/Woodpecker/main/scripts/install.sh | bash
 ```
 
 The installer will automatically:
@@ -62,7 +62,7 @@ If you prefer to install manually:
 2. **Download the script:**
    ```bash
    curl -sSL -o ~/.woodpecker/woodpecker.py \
-     https://raw.githubusercontent.com/Vishal01Mehra/Woodpecker/main/woodpecker.py
+     https://raw.githubusercontent.com/Vishal01Mehra/Woodpecker/main/src/woodpecker.py
    ```
 
 3. **Set up Python virtual environment:**
@@ -323,7 +323,7 @@ log show --predicate 'process == "woodpecker"' --level debug
 ### Quick Uninstall (Recommended)
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/Vishal01Mehra/Woodpecker/main/uninstall.sh | bash
+curl -sSL https://raw.githubusercontent.com/Vishal01Mehra/Woodpecker/main/scripts/uninstall.sh | bash
 ```
 
 This will:
@@ -364,10 +364,13 @@ If you prefer to uninstall step-by-step:
 
 ```
 Woodpecker/
-├── woodpecker.py          # Main detection and action execution script
-├── install.sh             # Automated installation script
-├── uninstall.sh           # Automated uninstallation script
-└── README.md              # This file
+├── src/
+│   └── woodpecker.py       # Main detection and action execution script
+├── scripts/
+│   ├── install.sh          # Automated installation script
+│   └── uninstall.sh        # Automated uninstallation script
+├── README.md               # Documentation (this file)
+└── LICENSE                 # Commons Clause + MIT License
 ```
 
 ### How It Works
