@@ -60,6 +60,11 @@ cat > "$PLIST_PATH" << EOF
         <string>$INSTALL_DIR/.venv/bin/python3</string>
         <string>$INSTALL_DIR/woodpecker.py</string>
     </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>WOODPECKER_USER</key>
+        <string>$ACTUAL_USER</string>
+    </dict>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
