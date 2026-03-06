@@ -1,36 +1,47 @@
 #!/bin/bash
 
-set -e  # Exit on error
+set -e
 
 echo "🪵 Installing Woodpecker..."
 echo ""
 
-# Get the actual user (in case running with sudo)
+# Get the actual user
 ACTUAL_USER=${SUDO_USER:-$USER}
 USER_HOME=$(eval echo ~$ACTUAL_USER)
 INSTALL_DIR="$USER_HOME/.woodpecker"
+DAEMON_PLIST="/Library/LaunchDaemons/com.mac.woodpecker.plist"
 
-# 1. Create installation directory
-echo "📁 Creating installation directory at $INSTALL_DIR..."
+# 1. Clean up any old installations
+if [ -f "$DAEMON_PLIST" ]; then
+    echo "🧹 Cleaning up old installation..."
+    sudo launchctl unload "$DAEMON_PLIST" 2>/dev/null || true
+    sudo rm "$DAEMON_PLIST" || true
+fi
+
+if [ -d "$INSTALL_DIR" ]; then
+    rm -rf "$INSTALL_DIR"
+fi
+
+# 2. Create installation directory
+echo "📁 Creating installation directory..."
 mkdir -p "$INSTALL_DIR"
 
-# 2. Download the main script
+# 3. Download the main script
 echo "⬇️  Downloading Woodpecker script..."
 curl -sSL -o "$INSTALL_DIR/woodpecker.py" \
   https://raw.githubusercontent.com/Vishal01Mehra/Woodpecker/main/src/woodpecker.py
 
-# 3. Create Python virtual environment
-echo "🐍 Setting up Python virtual environment..."
+# 4. Create Python virtual environment
+echo "🐍 Setting up Python environment..."
 python3 -m venv "$INSTALL_DIR/.venv"
 
-# 4. Install dependencies
+# 5. Install dependencies
 echo "📦 Installing dependencies..."
 "$INSTALL_DIR/.venv/bin/pip" install --quiet macimu
 
-# 5. Create default config if it doesn't exist
-echo "⚙️  Creating configuration file..."
-if [ ! -f "$INSTALL_DIR/config.json" ]; then
-    cat > "$INSTALL_DIR/config.json" << 'EOF'
+# 6. Create default config
+echo "⚙️  Creating configuration..."
+cat > "$INSTALL_DIR/config.json" << 'EOF'
 {
     "settings": {
         "tap_threshold": 0.07,
@@ -43,12 +54,14 @@ if [ ! -f "$INSTALL_DIR/config.json" ]; then
     }
 }
 EOF
-fi
 
-# 6. Create launchd plist file
-echo "🔧 Setting up daemon service..."
-PLIST_PATH="/tmp/com.mac.woodpecker.plist"
-cat > "$PLIST_PATH" << EOF
+# 7. Write username for daemon
+echo "$ACTUAL_USER" > "$INSTALL_DIR/.user"
+
+# 8. Create LaunchDaemon plist (requires sudo)
+echo "🔧 Setting up system service..."
+sudo bash << SUDOSCRIPT
+cat > "$DAEMON_PLIST" << 'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -75,26 +88,33 @@ cat > "$PLIST_PATH" << EOF
     <string>$INSTALL_DIR/woodpecker.log</string>
 </dict>
 </plist>
-EOF
+PLIST
 
-# 7. Install and start the daemon
-echo "🚀 Installing and starting daemon service..."
-sudo mv "$PLIST_PATH" /Library/LaunchDaemons/
-sudo chown root:wheel /Library/LaunchDaemons/com.mac.woodpecker.plist
-sudo chmod 644 /Library/LaunchDaemons/com.mac.woodpecker.plist
+chown root:wheel "$DAEMON_PLIST"
+chmod 644 "$DAEMON_PLIST"
+launchctl load "$DAEMON_PLIST"
+SUDOSCRIPT
 
-# Load the daemon
-sudo launchctl load /Library/LaunchDaemons/com.mac.woodpecker.plist
+# 9. Verify installation
+sleep 2
+echo ""
+if launchctl list | grep -q com.mac.woodpecker; then
+    echo "✅ Installation Complete!"
+    echo ""
+    echo "Woodpecker is now running in the background."
+    echo ""
+    echo "📋 Quick Commands:"
+    echo "   Status:  launchctl list | grep com.mac.woodpecker"
+    echo "   Logs:    tail -f $INSTALL_DIR/woodpecker.log"
+    echo "   Config:  nano $INSTALL_DIR/config.json"
+    echo "   Stop:    sudo launchctl unload $DAEMON_PLIST"
+    echo ""
+    echo "Try tapping your MacBook to test it!"
+    echo ""
+else
+    echo "⚠️  Installation may have issues. Check logs:"
+    echo "    tail -f $INSTALL_DIR/woodpecker.log"
+    exit 1
+fi
 
-echo ""
-echo "✅ Installation Complete!"
-echo ""
-echo "📋 Next Steps:"
-echo "   1. Give your MacBook a gentle tap to test it"
-echo "   2. Check status: launchctl list | grep com.mac.woodpecker"
-echo "   3. View logs: log show --predicate 'process == \"woodpecker\"' --last 1h"
-echo "   4. Edit config: nano $INSTALL_DIR/config.json"
-echo ""
-echo "📖 Documentation: https://github.com/Vishal01Mehra/Woodpecker"
-echo ""
 echo "Happy tapping! 🪵"
