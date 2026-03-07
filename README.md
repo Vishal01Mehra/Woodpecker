@@ -1,4 +1,5 @@
-# 🪵 Woodpecker
+# Woodpecker
+<img src="Resources/Logo.png" alt="Woodpecker Logo" width="100">
 
 ![macOS](https://img.shields.io/badge/macOS-Apple_Silicon_Only-000000?style=flat-square&logo=apple)
 ![Python](https://img.shields.io/badge/Python-3.9+-blue?style=flat-square&logo=python)
