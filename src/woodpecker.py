@@ -10,19 +10,57 @@ VERSION = "1.0.0"
 AUTHOR = "Vishal Mehra"
 
 # Safely get the actual macOS user
-ACTUAL_USER = os.environ.get('SUDO_USER') or os.environ.get('USER')
+# 1. Force identify the user from Environment or Fallback
+ACTUAL_USER = os.environ.get('WOODPECKER_USER')
+
+if not ACTUAL_USER or ACTUAL_USER == 'root':
+    # Search for the .user file in /Users as a last resort
+    for name in os.listdir('/Users'):
+        if name in ['Shared', '.localized']: continue
+        test_path = f"/Users/{name}/.woodpecker/.user"
+        if os.path.exists(test_path):
+            with open(test_path, 'r') as f:
+                ACTUAL_USER = f.read().strip()
+            break
+
+# 2. Critical Safety: Exit if detection failed to avoid "~None" error
+if not ACTUAL_USER or ACTUAL_USER == 'None':
+    print("FATAL: Woodpecker could not determine the target user.")
+    exit(1)
+
+# 3. Use Absolute Paths (Avoids ~ expansion issues in background daemons)
+USER_HOME = f"/Users/{ACTUAL_USER}"
+CONFIG_PATH = f"{USER_HOME}/.woodpecker/config.json"
+
+# If still None, get the owner of ~/.woodpecker if it exists
+if not ACTUAL_USER:
+    try:
+        woodpecker_path = os.path.expanduser('~/.woodpecker')
+        if os.path.exists(woodpecker_path):
+            stat_info = os.stat(woodpecker_path)
+            import pwd
+            ACTUAL_USER = pwd.getpwuid(stat_info.st_uid).pw_name
+    except (OSError, KeyError, Exception):
+        pass
+
+if not ACTUAL_USER:
+    print("Error: Could not determine the target user. Please check installation.")
+    exit(1)
+
 USER_HOME = os.path.expanduser(f"~{ACTUAL_USER}")
 CONFIG_PATH = os.path.join(USER_HOME, ".woodpecker", "config.json")
 
 DEFAULT_CONFIG = {
     "settings": {
-        "tap_threshold": 0.07,
+        "tap_threshold": 0.08,
         "tap_cooldown": 0.15,
         "multi_tap_window": 0.6
     },
     "actions": {
-        "2": "echo 'Double tap detected!'",
-        "3": f"screencapture -x {USER_HOME}/Desktop/woodpecker_shot_$(date +%s).png"
+        "2": "shortcuts run 'Shortcut0' && echo 'Shortcut 0 executed!'",
+        "3": "shortcuts run 'Shortcut1' && echo 'Shortcut 1 executed!'",
+        "4": "shortcuts run 'Shortcut2' && echo 'Shortcut 2 executed!'",
+        "5": "shortcuts run 'Shortcut3' && echo 'Shortcut 3 executed!'",
     }
 }
 
