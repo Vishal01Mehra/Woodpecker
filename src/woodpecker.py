@@ -52,7 +52,7 @@ CONFIG_PATH = os.path.join(USER_HOME, ".woodpecker", "config.json")
 
 DEFAULT_CONFIG = {
     "settings": {
-        "tap_threshold": 0.08,
+        "tap_threshold": 0.095,
         "tap_cooldown": 0.15,
         "multi_tap_window": 0.6
     },

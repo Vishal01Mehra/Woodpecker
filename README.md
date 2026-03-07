@@ -141,3 +141,4 @@ Woodpecker is released under **The Commons Clause License Condition v1.0**, base
 - ℹ️ **Distribution:** Any distribution must include the original copyright notice and the Commons Clause condition.
 
 Copyright (c) 2026 Vishal Mehra. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+
